@@ -2,7 +2,7 @@
 // Admin endpoint to create a license key for a paying user
 // Body: { adminPassword, userEmail, months }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
