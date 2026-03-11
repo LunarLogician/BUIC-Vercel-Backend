@@ -18,12 +18,21 @@ module.exports = async function handler(req, res) {
   const url   = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  const getRes = await fetch(`${url}/get/license:${licenseKey.toUpperCase()}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  if (!url || !token) {
+    return res.status(500).json({ valid: false, reason: 'Server misconfiguration: missing env vars' });
+  }
+
+  let getRes;
+  try {
+    getRes = await fetch(`${url}/get/license:${licenseKey.toUpperCase()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    return res.status(500).json({ valid: false, reason: 'Database connection error', detail: err.message });
+  }
 
   if (!getRes.ok) {
-    return res.status(500).json({ valid: false, reason: 'Database error' });
+    return res.status(500).json({ valid: false, reason: 'Database error', status: getRes.status });
   }
 
   const data = await getRes.json();

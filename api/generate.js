@@ -34,14 +34,21 @@ module.exports = async function handler(req, res) {
   const url   = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  const setRes = await fetch(`${url}/set/license:${licenseKey}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ value: JSON.stringify(record) }),
-  });
+  if (!url || !token) {
+    return res.status(500).json({ error: 'Server misconfiguration: missing env vars' });
+  }
+
+  let setRes;
+  try {
+    setRes = await fetch(`${url}/set/license:${licenseKey}/${encodeURIComponent(JSON.stringify(record))}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Database connection error', detail: err.message });
+  }
 
   if (!setRes.ok) {
-    return res.status(500).json({ error: 'Failed to store key in Redis' });
+    return res.status(500).json({ error: 'Failed to store key in Redis', status: setRes.status });
   }
 
   return res.status(200).json({
